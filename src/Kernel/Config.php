@@ -16,9 +16,9 @@ class Config extends Collection
     ];
 
     protected array $projectRequiredKeys = [
-        'base_uri',
-        'project_id',
+        'api_gateway',
         'auth_type',
+        'project_id',
     ];
 
     /**
@@ -33,7 +33,7 @@ class Config extends Collection
     }
 
     /**
-     * @param  string  $projectName
+     * @param  string  $project
      * @return $this
      * @throws InvalidArgumentException
      */
@@ -48,11 +48,12 @@ class Config extends Collection
         return $this;
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function getProjectId(): string
     {
-        $id = data_get($this, 'current.project_id');
-
-        if ($id) {
+        if ($id = data_get($this, 'current.project_id')) {
             return $id;
         }
 
@@ -60,7 +61,29 @@ class Config extends Collection
     }
 
     /**
+     * @throws \Throwable
+     */
+    public function getProjectGateway(): string
+    {
+        if ($value = data_get($this, 'current.api_gateway')) {
+            return rtrim($value, '/');
+        }
+
+        throw new InvalidArgumentException('The api gateway does not exist');
+    }
+
+    public function getEndpointPath(string $endpoint): string
+    {
+        if ($path = data_get($this, 'endpoint_path.' . $endpoint, false)) {
+            return rtrim($path, '/');
+        }
+
+        return $endpoint;
+    }
+
+    /**
      * @param  array  $keys
+     * @param  array  $values
      * @return bool
      * @throws InvalidArgumentException
      */

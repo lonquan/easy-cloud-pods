@@ -20,11 +20,17 @@ class Cache extends Psr16Cache implements CacheInterface
         ));
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function getEndpointKey(): string
     {
         return sprintf('endpoint_%s', $this->config->getProjectId());
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function getAccessTokenKey(): string
     {
         return sprintf('token_%s', $this->config->getProjectId());

@@ -7,7 +7,6 @@ namespace AntCool\CloudPods\Traits;
 use AntCool\CloudPods\Middleware\RequestLogMiddleware;
 use AntCool\CloudPods\Support\File;
 use GuzzleHttp\Client as Http;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Handler\CurlHandler;
 use GuzzleHttp\HandlerStack;
 use AntCool\CloudPods\Exceptions\ResponseInvalidException;
@@ -16,11 +15,17 @@ trait InteractWithHttpClient
 {
     protected Http $http;
 
+    /**
+     * @throws \Throwable
+     */
     public function getJson(string $uri, array $query = []): array
     {
         return $this->request(method: 'GET', uri: $uri, options: ['query' => $query]);
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function postJson(string $uri, array $data = [], array $query = []): array
     {
         return $this->request(method: 'POST', uri: $uri, options: [
@@ -29,6 +34,9 @@ trait InteractWithHttpClient
         ]);
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function deleteJson(string $uri, array $data = [], array $query = []): array
     {
         return $this->request(method: 'DELETE', uri: $uri, options: [
@@ -37,6 +45,9 @@ trait InteractWithHttpClient
         ]);
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function uploadFile(string $uri, File $file, array $data = [], array $query = []): array
     {
         return $this->request(method: 'POST', uri: $uri, options: [
@@ -46,11 +57,11 @@ trait InteractWithHttpClient
     }
 
     /**
-     * @throws GuzzleException
-     * @throws ResponseInvalidException
+     * @throws \Throwable
      */
     public function request(string $method, string $uri, $options = []): array
     {
+        $uri = empty($this->currentBaseUri) ? $uri : sprintf('%s/%s', $this->currentBaseUri, ltrim($uri, '/'));
         $response = $this->http->request($method, $uri, $options);
         $status = $response->getStatusCode();
         $body = $response->getBody();
@@ -80,9 +91,8 @@ trait InteractWithHttpClient
     protected function createHttp(string $baseUri = null, bool $refresh = false): self
     {
         if (empty($this->http) || $refresh) {
-            $baseUri = $baseUri ?: data_get($this->config, 'current.base_uri', null);
             $this->http = new Http([
-                'base_uri' => $baseUri . (str_ends_with($baseUri, '/') ? '' : '/'),
+                'base_uri' => $baseUri ?: null,
                 'timeout'  => data_get($this->config, 'http.timeout', 30),
                 'verify'   => data_get($this->config, 'http.verify', true),
                 'handler'  => $this->withHandleStacks(),

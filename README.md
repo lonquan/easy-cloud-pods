@@ -16,30 +16,44 @@ $ composer require antcool/easy-cloud-pods -vvv
 
 ## 使用
 
+**需开启统一API入口, [查看文档](https://www.cloudpods.org/zh/docs/development/apisdk/01_apigateway/#%E5%BC%80%E5%90%AF%E7%BB%9F%E4%B8%80api%E5%85%A5%E5%8F%A3)**
+
 ### 配置项
 
 ```php
 $config = [
-    'default'  => 'production',
-    'projects' => [
+    'default'       => 'production',
+    'projects'      => [
         'production' => [
-            'base_uri'     => 'https://ip:30500/v3/',
-            'project_id'   => '09dd****00c21a',
+            'api_gateway'  => 'https://<ip_or_domain_of_apigatway>/api/s/',
+            'project_id'   => '****',
             'project_name' => null,
 
             'auth_type' => 'password', // ak/sk
-
-            'key_id' => 'b32c*****60a',
-            'secret' => 'YXVVVV********5UUzU=',
+            'user_name'     => '****',
+            'user_password' => '****',
+            'key_id' => '****',
+            'secret' => '****',
 
             'domain'        => null,
             'domain_name'   => null,
-            'user_name'     => '*****',
-            'user_password' => '%*****',
+           
         ],
     ],
 
-    'debug'        => true, // 开启会在 runtime_path/logs 下生成请求的日志
+    /**
+     * 默认使用各 endpoint type 字段作为统一 API 入口请求时的服务类型路径
+     * 由于每个版本的路径会有不同, 当默认路径错误时, 可通过此配置覆盖
+     * compute_v2: compute_v2
+     * image: image/v1
+     * identity: identity/v3
+     */
+    'endpoint_path' => [
+        'image'    => 'image/v1',
+        'identity' => 'identity/v3',
+    ],
+
+    'debug'        => true,
     'runtime_path' => storage_path('cloud-pods'),
 
     'http' => [
@@ -72,13 +86,15 @@ $client = $app->getClient();
 $client->getEndpoints();
 
 // 获取支持的镜像
-$client->withService('image-public')->getJson('images', ['limit' => 1000, 'details' => true])
+$client->withService('image')->getJson('images', ['limit' => 1000, 'details' => true])
+// 实际请求 URL: https://<gateway>/api/s/image/v1/images?limit=1000&details=1
+
 
 // 获取主机规格
-$client->withService('compute_v2-public')->getJson('serverskus', ['limit' => 1000, 'details' => true]);
+$client->withService('compute_v2')->getJson('serverskus', ['limit' => 1000, 'details' => true]);
 
 // 创建秘钥对 
-$client->withService('compute_v2-public')->postJson('keypairs', [
+$client->withService('compute_v2')->postJson('keypairs', [
             'count'   => 1,
             'keypair' => [
                 'description' => 'description',
@@ -87,10 +103,10 @@ $client->withService('compute_v2-public')->postJson('keypairs', [
         ]);
 
 // 创建虚拟机
-$client->withService('compute_v2-public')->postJson('servers', $params);
+$client->withService('compute_v2')->postJson('servers', $params);
 
 // 删除虚拟机
-$client->withService('compute_v2-public')->deleteJson('servers/' . $id, [
+$client->withService('compute_v2')->deleteJson('servers/' . $id, [
             'OverridePendingDelete' => true,
             'Purge'                 => true,
             'DeleteSnapshots'       => true,
@@ -100,7 +116,9 @@ $client->withService('compute_v2-public')->deleteJson('servers/' . $id, [
 ```
 
 ## Contributing
+
 You can contribute in one of three ways:
+
 1. ...
 2. ...
 

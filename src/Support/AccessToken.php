@@ -10,6 +10,7 @@ use AntCool\CloudPods\Interfaces\AccessTokenInterface;
 use AntCool\CloudPods\Traits\InteractWithHttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use AntCool\CloudPods\Kernel\Config;
+use JetBrains\PhpStorm\ArrayShape;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Cache\Psr16Cache;
 use AntCool\CloudPods\Interfaces\CacheInterface;
@@ -23,7 +24,7 @@ class AccessToken implements AccessTokenInterface
     }
 
     /**
-     * @throws GuzzleException
+     * @throws \Throwable
      */
     public function getToken(): string
     {
@@ -34,6 +35,9 @@ class AccessToken implements AccessTokenInterface
         return $this->requestAuthUrl()['token'];
     }
 
+    /**
+     * @throws \Throwable
+     */
     public function getEndpoints()
     {
         if ($endpoints = $this->cache->get($this->cache->getEndpointKey(), false)) {
@@ -43,6 +47,10 @@ class AccessToken implements AccessTokenInterface
         return $this->requestAuthUrl()['endpoints'];
     }
 
+    /**
+     * @throws \Throwable
+     */
+    #[ArrayShape(['token' => "mixed", 'endpoints' => "mixed"])]
     protected function requestAuthUrl(): array
     {
         $config = $this->config->get('current');
@@ -54,7 +62,10 @@ class AccessToken implements AccessTokenInterface
             },
         ];
 
-        $response = $this->createHttp()->postJson('auth/tokens', $auth);
+        $response = $this->createHttp()->postJson(
+            sprintf('%s/%s/auth/tokens', $this->config->getProjectGateway(), $this->config->getEndpointPath('identity')),
+            $auth
+        );
 
         if (empty($response['token']['catalog'])) {
             throw new ResponseInvalidException('The response has no catalog field');
@@ -63,13 +74,9 @@ class AccessToken implements AccessTokenInterface
         $endpoints = array_reduce(
             $response['token']['catalog'],
             function ($carry, $item) {
-                $rows = array_reduce($item['endpoints'], function ($rows, $row) {
-                    $rows[$row['name']] = $row;
+                $carry[$item['type']] = ['id' => $item['id'], 'name' => $item['name'], 'type' => $item['type']];
 
-                    return $rows;
-                }, []);
-
-                return array_merge($carry, $rows);
+                return $carry;
             },
             []
         );

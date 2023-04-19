@@ -17,17 +17,17 @@ class Client
 {
     use InteractWithHttpClient;
 
-    protected ?string $serviceName;
-
-    protected ?array $serviceEndpoint;
-
     protected array $endpoints;
 
+    protected string $currentBaseUri;
+
+    /**
+     * @throws \Throwable
+     */
     public function __construct(protected Config $config, protected CacheInterface $cache, protected ?Logger $logger)
     {
-        $this->createHttp();
-
         $this->initEndpoints();
+        $this->createHttp();
     }
 
     public function withHandleStacks(): HandlerStack
@@ -45,25 +45,25 @@ class Client
         return $this->endpoints;
     }
 
-    public function withService(string $serviceName): static
+    /**
+     * @throws \Throwable
+     */
+    public function withService(string $name): static
     {
-        $this->serviceName = $serviceName;
-        $this->serviceEndpoint = $this->endpoints[$this->serviceName] ?? null;
+        $endpoint = $this->endpoints[$name] ?? null;
 
-        if (is_null($this->serviceEndpoint)) {
+        if (is_null($endpoint)) {
             throw new InvalidArgumentException('The endpoint of the service was not found');
         }
 
-        $this->createHttp($this->serviceEndpoint['url'], true);
+        $this->currentBaseUri = sprintf('%s/%s', $this->config->getProjectGateway(), $this->config->getEndpointPath($endpoint['type']));
 
         return $this;
     }
 
-    public function withoutService(): static
-    {
-        return $this;
-    }
-
+    /**
+     * @throws \Throwable
+     */
     protected function initEndpoints()
     {
         $this->endpoints = (new AccessToken($this->config, $this->cache, $this->logger))->getEndpoints();
