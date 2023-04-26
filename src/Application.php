@@ -7,9 +7,10 @@ namespace AntCool\CloudPods;
 use AntCool\CloudPods\Interfaces\CacheInterface;
 use AntCool\CloudPods\Kernel\Client;
 use AntCool\CloudPods\Kernel\Config;
-use AntCool\CloudPods\Kernel\Server;
+use AntCool\CloudPods\Kernel\Utils;
 use AntCool\CloudPods\Support\Cache;
 use AntCool\CloudPods\Support\Logger;
+use Throwable;
 
 class Application
 {
@@ -17,7 +18,9 @@ class Application
 
     protected Client $client;
 
-    protected Server $server;
+    // protected Server $server;
+
+    protected Utils $utils;
 
     protected CacheInterface $cache;
 
@@ -42,8 +45,16 @@ class Application
         return $this->config;
     }
 
+    /**
+     * @throws Throwable
+     */
     public function getClient(): Client
     {
         return $this->client ?? $this->client = new Client($this->config, $this->cache, $this->logger);
+    }
+
+    public function getUtils(): Utils
+    {
+        return $this->utils ?? $this->utils = new Utils();
     }
 }
