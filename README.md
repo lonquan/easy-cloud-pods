@@ -113,6 +113,10 @@ $client->withService('compute_v2')->deleteJson('servers/' . $id, [
             'DeleteEip'             => true,
             'DeleteDisks'           => true,
         ]);
+
+
+// 获取 monitor 监控服务 unified monitor 的查询接口签名
+$app->getUtils()->unifiedMonitorSign($params);
 ```
 
 ## Contributing
